@@ -1,1 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
 
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta name="theme-color" content="#7b1e1e">
+
+  <title>火晶建築 必要素材計算機</title>
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <main class="container">
+
+    <header class="hero">
+      <p class="hero-label">
+        WHITEOUT SURVIVAL TOOL
+      </p>
+
+      <h1>🔥 火晶建築 必要素材計算機</h1>
+
+      <p class="hero-description">
+        育成したい施設を複数選択すると、
+        前提施設を含めた必要素材を自動計算します。
+      </p>
+    </header>
+
+    <section class="guide-card">
+      <strong>前提条件込みで計算</strong>
+
+      <p>
+        大溶鉱炉には1つ下の火晶レベルの大使館が必要です。
+        その他の施設は大溶鉱炉を超えることができません。
+      </p>
+    </section>
+
+    <section class="toolbar">
+
+      <div>
+        <strong>施設を選択</strong>
+
+        <span id="selectedCount">
+          0施設選択中
+        </span>
+      </div>
+
+      <div class="toolbar-buttons">
+        <button
+          type="button"
+          class="mini-button"
+          id="selectAllButton"
+        >
+          すべて選択
+        </button>
+
+        <button
+          type="button"
+          class="mini-button"
+          id="clearAllButton"
+        >
+          すべて解除
+        </button>
+      </div>
+
+    </section>
+
+    <section
+      class="building-list"
+      id="buildingList"
+    ></section>
+
+    <section class="summary-card">
+
+      <div class="summary-title">
+        必要素材合計
+      </div>
+
+      <div class="material-grid">
+
+        <article class="material-card">
+          <div class="material-icon crystal">
+            ◆
+          </div>
+
+          <div>
+            <span>火晶</span>
+
+            <strong id="totalCrystal">
+              0
+            </strong>
+          </div>
+        </article>
+
+        <article class="material-card">
+          <div class="material-icon refined">
+            ⧖
+          </div>
+
+          <div>
+            <span>精錬火晶</span>
+
+            <strong id="totalRefined">
+              0
+            </strong>
+          </div>
+        </article>
+
+      </div>
+
+      <div
+        class="calculation-note"
+        id="calculationNote"
+      >
+        施設を選択してください
+      </div>
+
+    </section>
+
+    <section
+      class="route-card"
+      id="routeCard"
+    >
+      <div class="route-title">
+        計算に含まれる育成
+      </div>
+
+      <div id="routeList"></div>
+    </section>
+
+    <button
+      type="button"
+      class="reset-button"
+      id="resetButton"
+    >
+      入力内容をすべてリセット
+    </button>
+
+    <p class="footer-note">
+      ※ 選択していない前提施設も、必要な場合は自動で計算に加えます。<br>
+      ※ 入力内容はこの端末のブラウザに自動保存されます。
+    </p>
+
+  </main>
+
+  <script src="./script.js"></script>
+
+</body>
+</html>
