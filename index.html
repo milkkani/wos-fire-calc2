@@ -20,134 +20,209 @@
   <main class="container">
 
     <header class="hero">
+
       <p class="hero-label">
         WHITEOUT SURVIVAL TOOL
       </p>
 
-      <h1>🔥 火晶建築 必要素材計算機</h1>
+      <h1>
+        🔥 火晶建築 必要素材計算機
+      </h1>
 
       <p class="hero-description">
-        育成したい施設を複数選択すると、
-        前提施設を含めた必要素材を自動計算します。
+        育成したい施設を複数選択して、
+        必要な火晶と精錬火晶を計算できます。
       </p>
+
     </header>
 
-    <section class="guide-card">
-      <strong>前提条件込みで計算</strong>
 
-      <p>
-        大溶鉱炉には1つ下の火晶レベルの大使館が必要です。
-        その他の施設は大溶鉱炉を超えることができません。
-      </p>
-    </section>
+    <section class="settings-card">
 
-    <section class="toolbar">
+      <label class="requirement-switch">
 
-      <div>
-        <strong>施設を選択</strong>
+        <span class="switch-text">
 
-        <span id="selectedCount">
-          0施設選択中
+          <strong>
+            前提施設を含める
+          </strong>
+
+          <small>
+            不足している大使館・大溶鉱炉を自動追加します
+          </small>
+
         </span>
-      </div>
 
-      <div class="toolbar-buttons">
+        <input
+          type="checkbox"
+          id="includeRequirements"
+          checked
+        >
+
+      </label>
+
+
+      <div class="top-buttons">
+
         <button
           type="button"
-          class="mini-button"
           id="selectAllButton"
+          class="small-button"
         >
           すべて選択
         </button>
 
         <button
           type="button"
-          class="mini-button"
           id="clearAllButton"
+          class="small-button"
         >
           すべて解除
         </button>
+
+        <button
+          type="button"
+          id="shareButton"
+          class="small-button share-button"
+        >
+          入力状態を共有
+        </button>
+
+      </div>
+
+      <p
+        id="shareMessage"
+        class="share-message"
+      ></p>
+
+    </section>
+
+
+    <section class="building-heading">
+
+      <div>
+
+        <h2>
+          施設を選択
+        </h2>
+
+        <p id="selectedCount">
+          0施設選択中
+        </p>
+
       </div>
 
     </section>
 
+
     <section
-      class="building-list"
       id="buildingList"
+      class="building-list"
     ></section>
+
 
     <section class="summary-card">
 
-      <div class="summary-title">
+      <h2>
         必要素材合計
-      </div>
+      </h2>
 
       <div class="material-grid">
 
         <article class="material-card">
-          <div class="material-icon crystal">
+
+          <div class="material-icon crystal-icon">
             ◆
           </div>
 
-          <div>
-            <span>火晶</span>
+          <div class="material-information">
+
+            <span>
+              火晶
+            </span>
 
             <strong id="totalCrystal">
               0
             </strong>
+
           </div>
+
         </article>
 
+
         <article class="material-card">
-          <div class="material-icon refined">
-            ⧖
+
+          <div class="material-icon refined-icon">
+            ⌛
           </div>
 
-          <div>
-            <span>精錬火晶</span>
+          <div class="material-information">
+
+            <span>
+              精錬火晶
+            </span>
 
             <strong id="totalRefined">
               0
             </strong>
+
           </div>
+
         </article>
 
       </div>
 
-      <div
-        class="calculation-note"
+
+      <p
         id="calculationNote"
+        class="calculation-note"
       >
         施設を選択してください
-      </div>
+      </p>
 
     </section>
 
-    <section
-      class="route-card"
-      id="routeCard"
-    >
-      <div class="route-title">
+
+    <section class="route-card">
+
+      <h2>
         計算に含まれる育成
+      </h2>
+
+      <div id="routeList">
+
+        <p class="route-empty">
+          施設を選択すると表示されます
+        </p>
+
       </div>
 
-      <div id="routeList"></div>
     </section>
+
 
     <button
       type="button"
-      class="reset-button"
       id="resetButton"
+      class="reset-button"
     >
       入力内容をすべてリセット
     </button>
 
+
     <p class="footer-note">
-      ※ 選択していない前提施設も、必要な場合は自動で計算に加えます。<br>
-      ※ 入力内容はこの端末のブラウザに自動保存されます。
+
+      ※ 段階表示はすべて1/5〜4/5で統一しています。<br>
+
+      ※ 5段階目が完了すると、次の火晶レベルになります。<br>
+
+      ※ 例：火晶Lv5 4/5 → 火晶Lv6<br>
+
+      ※ 入力内容はこの端末に自動保存されます。
+
     </p>
 
   </main>
+
 
   <script src="./script.js"></script>
 
