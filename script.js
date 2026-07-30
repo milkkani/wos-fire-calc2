@@ -270,16 +270,26 @@
     return { crystal, refined, rows };
   }
 
-  function updateCalculation() {
+    function updateCalculation() {
+    const cards = {};
+    const effectiveTargets = {};
+    const autoReasons = {};
+
+    let manualCount = 0;
+    let includedCount = 0;
     let totalCrystal = 0;
     let totalRefined = 0;
-    let selected = 0;
 
     const routes = [];
+
+    const requirementsEnabled =
+      $("includeRequirements").checked;
 
     document
       .querySelectorAll(".building-card")
       .forEach(card => {
+        const id = card.dataset.building;
+
         const checkbox =
           card.querySelector(".building-check");
 
@@ -289,98 +299,270 @@
         const targetSelect =
           card.querySelector(".target-level");
 
-        const detail =
-          card.querySelector(".detail-content");
+        cards[id] = {
+          card,
+          checkbox,
 
-        const buildingId =
-          card.dataset.building;
+          detail:
+            card.querySelector(".detail-content"),
 
-        const building =
-          BUILDINGS.find(item => item[0] === buildingId);
+          currentKey:
+            currentSelect.value,
 
-        const currentKey = currentSelect.value;
-        const targetKey = targetSelect.value;
+          targetKey:
+            targetSelect.value,
 
-        card.classList.toggle(
-          "selected",
-          checkbox.checked
+          currentRank:
+            LEVEL_BY_KEY[currentSelect.value].rank,
+
+          targetRank:
+            LEVEL_BY_KEY[targetSelect.value].rank
+        };
+
+        card
+          .querySelectorAll(".auto-badge")
+          .forEach(badge => {
+            badge.remove();
+          });
+
+        if (checkbox.checked) {
+          manualCount += 1;
+
+          effectiveTargets[id] =
+            LEVEL_BY_KEY[targetSelect.value].rank;
+        }
+      });
+
+    /*
+      選択した施設が大溶鉱炉より高い場合、
+      必要な大溶鉱炉を自動追加する
+    */
+    if (requirementsEnabled) {
+      let requiredFurnaceRank = 0;
+
+      BUILDINGS.forEach(building => {
+        const id = building[0];
+
+        if (
+          id !== "furnace" &&
+          cards[id].checkbox.checked
+        ) {
+          requiredFurnaceRank = Math.max(
+            requiredFurnaceRank,
+            cards[id].targetRank
+          );
+        }
+      });
+
+      if (
+        requiredFurnaceRank >
+        cards.furnace.currentRank
+      ) {
+        effectiveTargets.furnace = Math.max(
+          effectiveTargets.furnace ||
+            cards.furnace.currentRank,
+
+          requiredFurnaceRank
         );
 
-        if (!checkbox.checked) {
-          detail.innerHTML = `
-            <p class="route-empty">
-              施設を選択してください
-            </p>
-          `;
-          return;
+        if (!cards.furnace.checkbox.checked) {
+          autoReasons.furnace =
+            "選択施設の前提として自動追加";
+        } else if (
+          effectiveTargets.furnace >
+          cards.furnace.targetRank
+        ) {
+          autoReasons.furnace =
+            "選択施設に合わせて目標を自動調整";
         }
+      }
 
-        selected += 1;
+      /*
+        大溶鉱炉の前提として、
+        1段階前の完成済み大使館を自動追加する
+      */
+      const furnaceTargetRank =
+        effectiveTargets.furnace;
 
-        const result = calculateBuilding(
-          buildingId,
-          currentKey,
-          targetKey
+      if (
+        typeof furnaceTargetRank === "number" &&
+        furnaceTargetRank > 0
+      ) {
+        const requiredEmbassyRank =
+          Math.floor(
+            (furnaceTargetRank - 1) / 5
+          ) * 5;
+
+        if (
+          requiredEmbassyRank >
+          cards.embassy.currentRank
+        ) {
+          effectiveTargets.embassy = Math.max(
+            effectiveTargets.embassy ||
+              cards.embassy.currentRank,
+
+            requiredEmbassyRank
+          );
+
+          if (!cards.embassy.checkbox.checked) {
+            autoReasons.embassy =
+              "大溶鉱炉の前提として自動追加";
+          } else if (
+            effectiveTargets.embassy >
+            cards.embassy.targetRank
+          ) {
+            autoReasons.embassy =
+              "大溶鉱炉に合わせて目標を自動調整";
+          }
+        }
+      }
+    }
+
+    BUILDINGS.forEach(building => {
+      const [id, name] = building;
+      const state = cards[id];
+
+      const manuallySelected =
+        state.checkbox.checked;
+
+      const targetRank =
+        effectiveTargets[id];
+
+      const included =
+        manuallySelected ||
+        typeof targetRank === "number";
+
+      state.card.classList.toggle(
+        "selected",
+        included
+      );
+
+      if (!included) {
+        state.detail.innerHTML = `
+          <p class="route-empty">
+            施設を選択してください
+          </p>
+        `;
+
+        return;
+      }
+
+      includedCount += 1;
+
+      const actualTargetRank =
+        typeof targetRank === "number"
+          ? targetRank
+          : state.targetRank;
+
+      const actualTargetKey =
+        LEVELS[actualTargetRank][0];
+
+      const result =
+        calculateBuilding(
+          id,
+          state.currentKey,
+          actualTargetKey
         );
 
-        totalCrystal += result.crystal;
-        totalRefined += result.refined;
+      totalCrystal += result.crystal;
+      totalRefined += result.refined;
 
-        if (result.rows.length === 0) {
-          detail.innerHTML = `
-            <p class="route-empty">
-              目標レベルを現在レベルより
-              高くしてください
-            </p>
-          `;
-        } else {
-          const rows = result.rows
-            .map(row => {
-              const refinedText =
-                row.refined > 0
-                  ? ` / 精錬 ${formatNumber(row.refined)}`
-                  : "";
+      if (autoReasons[id]) {
+        const badge =
+          document.createElement("div");
 
-              return `
-                <div class="detail-row">
-                  <span>${row.label}</span>
+        badge.className = "auto-badge";
+        badge.textContent =
+          autoReasons[id];
 
-                  <span>
-                    火晶 ${formatNumber(row.crystal)}
-                    ${refinedText}
-                  </span>
-                </div>
-              `;
-            })
-            .join("");
+        state.card
+          .querySelector(".details")
+          .before(badge);
+      }
 
-          detail.innerHTML = `
-            ${rows}
+      if (result.rows.length === 0) {
+        state.detail.innerHTML = `
+          <p class="route-empty">
+            追加で必要な素材はありません
+          </p>
+        `;
+      } else {
+        const rows = result.rows
+          .map(row => {
+            const refinedText =
+              row.refined > 0
+                ? ` / 精錬 ${formatNumber(
+                    row.refined
+                  )}`
+                : "";
 
-            <div class="detail-row detail-total">
-              <span>合計</span>
+            return `
+              <div class="detail-row">
 
-              <span>
-                火晶 ${formatNumber(result.crystal)}
-                /
-                精錬 ${formatNumber(result.refined)}
-              </span>
-            </div>
-          `;
-        }
+                <span>
+                  ${row.label}
+                </span>
 
-        routes.push(`
-          <div class="route-item">
-            <span>${building[1]}</span>
+                <span>
+                  火晶 ${formatNumber(
+                    row.crystal
+                  )}
+                  ${refinedText}
+                </span>
+
+              </div>
+            `;
+          })
+          .join("");
+
+        state.detail.innerHTML = `
+          ${rows}
+
+          <div class="detail-row detail-total">
 
             <span>
-              ${LEVEL_BY_KEY[currentKey].label}
-              →
-              ${LEVEL_BY_KEY[targetKey].label}
+              合計
             </span>
+
+            <span>
+              火晶 ${formatNumber(
+                result.crystal
+              )}
+              /
+              精錬 ${formatNumber(
+                result.refined
+              )}
+            </span>
+
           </div>
-        `);
-      });
+        `;
+      }
+
+      const autoText =
+        autoReasons[id]
+          ? "（自動追加）"
+          : "";
+
+      routes.push(`
+        <div class="route-item">
+
+          <span>
+            ${name}${autoText}
+          </span>
+
+          <span>
+            ${LEVEL_BY_KEY[
+              state.currentKey
+            ].label}
+            →
+            ${LEVEL_BY_KEY[
+              actualTargetKey
+            ].label}
+          </span>
+
+        </div>
+      `);
+    });
 
     $("totalCrystal").textContent =
       formatNumber(totalCrystal);
@@ -389,12 +571,21 @@
       formatNumber(totalRefined);
 
     $("selectedCount").textContent =
-      `${selected}施設選択中`;
+      `${manualCount}施設選択中`;
 
-    $("calculationNote").textContent =
-      selected > 0
-        ? `${selected}施設分の必要素材です`
-        : "施設を選択してください";
+    const autoCount =
+      includedCount - manualCount;
+
+    if (manualCount === 0) {
+      $("calculationNote").textContent =
+        "施設を選択してください";
+    } else if (autoCount > 0) {
+      $("calculationNote").textContent =
+        `${manualCount}施設＋前提${autoCount}施設分の必要素材です`;
+    } else {
+      $("calculationNote").textContent =
+        `${manualCount}施設分の必要素材です`;
+    }
 
     $("routeList").innerHTML =
       routes.length > 0
@@ -460,10 +651,15 @@
   );
 
   const requirementSwitch =
-    $("includeRequirements");
+  $("includeRequirements");
 
-  requirementSwitch.checked = false;
-  requirementSwitch.disabled = true;
+requirementSwitch.disabled = false;
+requirementSwitch.checked = true;
 
-  updateCalculation();
+requirementSwitch.addEventListener(
+  "change",
+  updateCalculation
+);
+
+updateCalculation();
 })();
