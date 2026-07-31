@@ -463,6 +463,7 @@ button {
     text-align: left;
   }
 }
+
 .material-image {
   width: 100%;
   height: 100%;
@@ -474,4 +475,3 @@ button {
 .refined-icon {
   background: transparent;
 }
-
