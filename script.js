@@ -9,7 +9,7 @@
     ["infantry", "盾兵舎", "Lv30から火晶Lv10まで"],
     ["lancer", "槍兵舎", "Lv30から火晶Lv10まで"],
     ["marksman", "弓兵舎", "Lv30から火晶Lv10まで"],
-    ["academy", "戦争学舎", "火晶Lv1から火晶Lv10まで"]
+    ["academy", "戦争学園", "火晶Lv1から火晶Lv10まで"]
   ];
 
   const same = crystal =>
