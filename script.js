@@ -174,6 +174,12 @@
                 aria-label="${name}を選択"
               >
 
+<img
+  src="./${id}.PNG"
+  class="building-image"
+  alt="${name}"
+>
+
               <div class="building-information">
                 <div class="building-name">
                   ${name}
