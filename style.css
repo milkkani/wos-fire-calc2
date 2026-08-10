@@ -475,3 +475,12 @@ button {
 .refined-icon {
   background: transparent;
 }
+
+.building-image {
+  width: 76px;
+  height: 68px;
+  flex: 0 0 76px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 10px;
+}
