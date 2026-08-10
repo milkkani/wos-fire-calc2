@@ -5,7 +5,7 @@
     ["furnace", "大溶鉱炉", "Lv30から火晶Lv10まで"],
     ["embassy", "大使館", "Lv30から火晶Lv10まで"],
     ["command", "司令部", "Lv30から火晶Lv10まで"],
-    ["infirmary", "医務室", "Lv30から火晶Lv10まで"],
+    ["infirmary", "軍医場", "Lv30から火晶Lv10まで"],
     ["infantry", "盾兵舎", "Lv30から火晶Lv10まで"],
     ["lancer", "槍兵舎", "Lv30から火晶Lv10まで"],
     ["marksman", "弓兵舎", "Lv30から火晶Lv10まで"],
