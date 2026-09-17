@@ -31,7 +31,7 @@
 
       <p class="hero-description">
         育成したい施設を複数選択して、
-        必要な火晶と精錬火晶を計算できます。
+        必要資源と建築時間を計算できます。
       </p>
 
     </header>
@@ -60,6 +60,81 @@
         >
 
       </label>
+
+      <div class="speed-settings">
+
+        <h2>
+          建築時間設定
+        </h2>
+
+        <div class="speed-grid">
+
+          <label class="speed-field">
+            <span>建造速度</span>
+
+            <div class="percent-input">
+              <input
+                type="number"
+                id="buildingSpeed"
+                min="0"
+                max="9999"
+                step="0.1"
+                inputmode="decimal"
+                value="0"
+              >
+
+              <span>%</span>
+            </div>
+          </label>
+
+          <label class="speed-field">
+            <span>ハイエナ（建築支援）</span>
+
+            <select id="hyenaBuff">
+              <option value="0">使用しない（0%）</option>
+              <option value="5">Lv1（5%）</option>
+              <option value="7">Lv2（7%）</option>
+              <option value="9">Lv3（9%）</option>
+              <option value="12">Lv4（12%）</option>
+              <option value="15">Lv5（15%）</option>
+            </select>
+          </label>
+
+        </div>
+
+        <div class="temporary-buffs">
+
+          <label class="double-time-switch">
+
+            <span>
+              <strong>副執政官</strong>
+              <small>任命中は建造速度＋15%</small>
+            </span>
+
+            <input
+              type="checkbox"
+              id="ministerBuff"
+            >
+
+          </label>
+
+          <label class="double-time-switch">
+
+            <span>
+              <strong>領主指令（建造加速）</strong>
+              <small>使用時は必要時間を20%短縮</small>
+            </span>
+
+            <input
+              type="checkbox"
+              id="doubleTimeBuff"
+            >
+
+          </label>
+
+        </div>
+
+      </div>
 
 
       <div class="top-buttons">
@@ -97,8 +172,7 @@
 
     </section>
 
-
-    <section class="building-heading">
+        <section class="building-heading">
 
       <div>
 
@@ -132,12 +206,12 @@
         <article class="material-card">
 
           <div class="material-icon crystal-icon">
-  <img
-    src="./crystal.PNG"
-    class="material-image"
-    alt="火晶"
-  >
-</div>
+            <img
+              src="./crystal.PNG"
+              class="material-image"
+              alt="火晶"
+            >
+          </div>
 
           <div class="material-information">
 
@@ -157,11 +231,11 @@
         <article class="material-card">
 
           <div class="material-icon refined-icon">
-  <img
-    src="./refined-crystal.PNG"
-    class="material-image"
-    alt="精錬火晶"
-  >
+            <img
+              src="./refined-crystal.PNG"
+              class="material-image"
+              alt="精錬火晶"
+            >
           </div>
 
           <div class="material-information">
@@ -177,6 +251,77 @@
           </div>
 
         </article>
+
+
+        <article class="material-card">
+
+          <div class="material-icon resource-emoji">
+            🥩
+          </div>
+
+          <div class="material-information">
+            <span>生肉</span>
+            <strong id="totalFood">0</strong>
+          </div>
+
+        </article>
+
+
+        <article class="material-card">
+
+          <div class="material-icon resource-emoji">
+            🪵
+          </div>
+
+          <div class="material-information">
+            <span>木材</span>
+            <strong id="totalWood">0</strong>
+          </div>
+
+        </article>
+
+
+        <article class="material-card">
+
+          <div class="material-icon resource-emoji">
+            🪨
+          </div>
+
+          <div class="material-information">
+            <span>石炭</span>
+            <strong id="totalCoal">0</strong>
+          </div>
+
+        </article>
+
+
+        <article class="material-card">
+
+          <div class="material-icon resource-emoji">
+            ⛓️
+          </div>
+
+          <div class="material-information">
+            <span>鉄鉱</span>
+            <strong id="totalIron">0</strong>
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <div class="time-summary">
+
+        <div class="time-row">
+          <span>初期建築時間</span>
+          <strong id="totalBaseTime">0秒</strong>
+        </div>
+
+        <div class="time-row adjusted-time-row">
+          <span>バフ適用後</span>
+          <strong id="totalAdjustedTime">0秒</strong>
+        </div>
 
       </div>
 
@@ -225,7 +370,11 @@
 
       ※ 例：火晶Lv5 4/5 → 火晶Lv6<br>
 
-      ※ 入力内容はこの端末に自動保存されます。
+      ※ 入力内容はこの端末に自動保存されます。<br>
+
+      ※ 建築時間は公式Wiki記載の初期時間を基準にしています。<br>
+
+      ※ 連盟支援による時間短縮は含まれていません。
 
     </p>
 
@@ -236,6 +385,3 @@
 
 </body>
 </html>
-
-
-
