@@ -1055,5 +1055,810 @@
     }
   );
 
+/* =========================================================
+   結果を1枚の画像にして共有
+   このコードは updateCalculation(); の直前に追加
+========================================================= */
+
+const resultShareButton = $("shareButton");
+
+if (resultShareButton) {
+  resultShareButton.textContent = "結果を画像で共有";
+
+  /*
+    capture:true で先に処理することで、
+    以前の「共有機能は次のバージョンで追加予定です」
+    のクリック処理を動かさない
+  */
+  resultShareButton.addEventListener(
+    "click",
+    async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const button = resultShareButton;
+      const message = $("shareMessage");
+
+      button.disabled = true;
+      button.textContent = "画像を作成中...";
+
+      try {
+        /* =========================
+           選択施設を取得
+        ========================= */
+
+        const selectedBuildings = [];
+
+        document
+          .querySelectorAll(".building-card.selected")
+          .forEach(card => {
+            const id = card.dataset.building;
+
+            const buildingData = BUILDINGS.find(
+              building => building[0] === id
+            );
+
+            if (!buildingData) return;
+
+            const name = buildingData[1];
+
+            const currentSelect =
+              card.querySelector(".current-level");
+
+            let currentText =
+              currentSelect.options[
+                currentSelect.selectedIndex
+              ]?.textContent?.trim() || "";
+
+            let targetText = "";
+
+            /*
+              「計算に含まれる育成」から
+              実際に計算された目標を取得。
+              これで自動追加施設にも対応。
+            */
+            const routeItems = Array.from(
+              document.querySelectorAll(".route-item")
+            );
+
+            const route = routeItems.find(item => {
+              const firstSpan =
+                item.querySelector("span");
+
+              return (
+                firstSpan &&
+                firstSpan.textContent.includes(name)
+              );
+            });
+
+            if (route) {
+              const spans =
+                route.querySelectorAll("span");
+
+              if (spans.length >= 2) {
+                const routeText =
+                  spans[1].textContent
+                    .replace(/\s+/g, " ")
+                    .trim();
+
+                const pieces =
+                  routeText.split("→");
+
+                if (pieces.length >= 2) {
+                  currentText =
+                    pieces[0].trim();
+
+                  targetText =
+                    pieces[1].trim();
+                }
+              }
+            }
+
+            /*
+              routeから取れなかった場合
+            */
+            if (!targetText) {
+              const targetSelect =
+                card.querySelector(".target-level");
+
+              targetText =
+                targetSelect.options[
+                  targetSelect.selectedIndex
+                ]?.textContent?.trim() || "";
+            }
+
+            selectedBuildings.push({
+              name,
+              current: currentText,
+              target: targetText,
+              auto:
+                Boolean(
+                  card.querySelector(".auto-badge")
+                )
+            });
+          });
+
+        if (selectedBuildings.length === 0) {
+          if (message) {
+            message.textContent =
+              "先に施設を選択してください";
+
+            setTimeout(() => {
+              message.textContent = "";
+            }, 2500);
+          }
+
+          return;
+        }
+
+        /* =========================
+           計算結果を取得
+        ========================= */
+
+        const resources = [
+          {
+            name: "火晶",
+            value:
+              $("totalCrystal")?.textContent?.trim() || "0",
+            src: "./crystal.PNG"
+          },
+          {
+            name: "精錬火晶",
+            value:
+              $("totalRefined")?.textContent?.trim() || "0",
+            src: "./refined-crystal.PNG"
+          },
+          {
+            name: "生肉",
+            value:
+              $("totalFood")?.textContent?.trim() || "0",
+            src: "./food.png"
+          },
+          {
+            name: "木材",
+            value:
+              $("totalWood")?.textContent?.trim() || "0",
+            src: "./wood.png"
+          },
+          {
+            name: "石炭",
+            value:
+              $("totalCoal")?.textContent?.trim() || "0",
+            src: "./coal.png"
+          },
+          {
+            name: "鉄鉱",
+            value:
+              $("totalIron")?.textContent?.trim() || "0",
+            src: "./iron.png"
+          }
+        ];
+
+        const baseTime =
+          $("totalBaseTime")?.textContent?.trim() ||
+          "0秒";
+
+        const adjustedTime =
+          $("totalAdjustedTime")?.textContent?.trim() ||
+          "0秒";
+
+        /* =========================
+           バフ情報
+        ========================= */
+
+        const buildingSpeed =
+          Number($("buildingSpeed")?.value) || 0;
+
+        const hyenaSelect =
+          $("hyenaBuff");
+
+        let hyenaText = "使用しない（0%）";
+
+        if (hyenaSelect) {
+          hyenaText =
+            hyenaSelect.options[
+              hyenaSelect.selectedIndex
+            ]?.textContent?.trim() ||
+            "使用しない（0%）";
+        }
+
+        const minister =
+          $("ministerBuff")?.checked
+            ? "ON"
+            : "OFF";
+
+        const order =
+          $("doubleTimeBuff")?.checked
+            ? "ON"
+            : "OFF";
+
+        /* =========================
+           Canvas設定
+        ========================= */
+
+        const canvas =
+          document.createElement("canvas");
+
+        const ctx =
+          canvas.getContext("2d");
+
+        const WIDTH = 1080;
+
+        /*
+          施設数に応じて画像を縦に伸ばす
+        */
+        const buildingHeight =
+          selectedBuildings.length * 72;
+
+        const HEIGHT =
+          1330 + buildingHeight;
+
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+
+        /* =========================
+           色
+        ========================= */
+
+        const background = "#f5eee5";
+        const card = "#fffaf4";
+        const card2 = "#f8f0e7";
+        const dark = "#392b27";
+        const brown = "#7b1e1e";
+        const gray = "#796a63";
+        const border = "#e5d7ca";
+
+        /* =========================
+           角丸
+        ========================= */
+
+        function roundedRectangle(
+          x,
+          y,
+          width,
+          height,
+          radius,
+          color
+        ) {
+          ctx.beginPath();
+
+          ctx.moveTo(x + radius, y);
+          ctx.lineTo(
+            x + width - radius,
+            y
+          );
+
+          ctx.quadraticCurveTo(
+            x + width,
+            y,
+            x + width,
+            y + radius
+          );
+
+          ctx.lineTo(
+            x + width,
+            y + height - radius
+          );
+
+          ctx.quadraticCurveTo(
+            x + width,
+            y + height,
+            x + width - radius,
+            y + height
+          );
+
+          ctx.lineTo(
+            x + radius,
+            y + height
+          );
+
+          ctx.quadraticCurveTo(
+            x,
+            y + height,
+            x,
+            y + height - radius
+          );
+
+          ctx.lineTo(
+            x,
+            y + radius
+          );
+
+          ctx.quadraticCurveTo(
+            x,
+            y,
+            x + radius,
+            y
+          );
+
+          ctx.closePath();
+
+          ctx.fillStyle = color;
+          ctx.fill();
+        }
+
+        /* =========================
+           画像読み込み
+        ========================= */
+
+        function loadShareImage(src) {
+          return new Promise(resolve => {
+            const image = new Image();
+
+            image.onload = () =>
+              resolve(image);
+
+            image.onerror = () =>
+              resolve(null);
+
+            image.src = src;
+          });
+        }
+
+        const resourceImages =
+          await Promise.all(
+            resources.map(resource =>
+              loadShareImage(resource.src)
+            )
+          );
+
+        /* =========================
+           背景
+        ========================= */
+
+        ctx.fillStyle = background;
+
+        ctx.fillRect(
+          0,
+          0,
+          WIDTH,
+          HEIGHT
+        );
+
+        /* =========================
+           タイトル
+        ========================= */
+
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = brown;
+
+        ctx.font =
+          '700 27px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "WHITEOUT SURVIVAL TOOL",
+          WIDTH / 2,
+          72
+        );
+
+        ctx.fillStyle = dark;
+
+        ctx.font =
+          '800 48px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "火晶建築 必要素材計算結果",
+          WIDTH / 2,
+          138
+        );
+
+        /* =========================
+           育成施設
+        ========================= */
+
+        let y = 190;
+
+        const buildingCardHeight =
+          100 + buildingHeight;
+
+        roundedRectangle(
+          65,
+          y,
+          950,
+          buildingCardHeight,
+          28,
+          card
+        );
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = brown;
+
+        ctx.font =
+          '800 30px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "計算に含まれる育成",
+          105,
+          y + 55
+        );
+
+        let buildingY =
+          y + 115;
+
+        selectedBuildings.forEach(
+          building => {
+            ctx.fillStyle = dark;
+
+            ctx.textAlign = "left";
+
+            ctx.font =
+              '700 27px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+            ctx.fillText(
+              building.auto
+                ? `${building.name}（自動追加）`
+                : building.name,
+              105,
+              buildingY
+            );
+
+            ctx.textAlign = "right";
+
+            ctx.fillStyle = gray;
+
+            ctx.font =
+              '600 24px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+            ctx.fillText(
+              `${building.current} → ${building.target}`,
+              975,
+              buildingY
+            );
+
+            buildingY += 72;
+          }
+        );
+
+        /* =========================
+           必要素材
+        ========================= */
+
+        y +=
+          buildingCardHeight + 35;
+
+        const resourceCardHeight = 455;
+
+        roundedRectangle(
+          65,
+          y,
+          950,
+          resourceCardHeight,
+          28,
+          card
+        );
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = brown;
+
+        ctx.font =
+          '800 30px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "必要素材",
+          105,
+          y + 58
+        );
+
+        /*
+          2列 × 3段
+        */
+        resources.forEach(
+          (resource, index) => {
+            const column =
+              index % 2;
+
+            const row =
+              Math.floor(index / 2);
+
+            const itemX =
+              column === 0
+                ? 105
+                : 555;
+
+            const itemY =
+              y + 115 + row * 105;
+
+            /*
+              資源アイコン
+            */
+            const image =
+              resourceImages[index];
+
+            if (image) {
+              ctx.drawImage(
+                image,
+                itemX,
+                itemY - 37,
+                64,
+                64
+              );
+            }
+
+            ctx.textAlign = "left";
+
+            ctx.fillStyle = gray;
+
+            ctx.font =
+              '600 23px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+            ctx.fillText(
+              resource.name,
+              itemX + 85,
+              itemY - 8
+            );
+
+            ctx.fillStyle = brown;
+
+            ctx.font =
+              '800 32px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+            ctx.fillText(
+              resource.value,
+              itemX + 85,
+              itemY + 30
+            );
+          }
+        );
+
+        /* =========================
+           建築時間
+        ========================= */
+
+        y +=
+          resourceCardHeight + 35;
+
+        roundedRectangle(
+          65,
+          y,
+          950,
+          190,
+          28,
+          card
+        );
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = gray;
+
+        ctx.font =
+          '600 25px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "初期建築時間",
+          105,
+          y + 62
+        );
+
+        ctx.textAlign = "right";
+
+        ctx.fillStyle = dark;
+
+        ctx.font =
+          '800 29px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          baseTime,
+          975,
+          y + 62
+        );
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = brown;
+
+        ctx.font =
+          '700 25px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "バフ適用後",
+          105,
+          y + 135
+        );
+
+        ctx.textAlign = "right";
+
+        ctx.font =
+          '800 34px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          adjustedTime,
+          975,
+          y + 135
+        );
+
+        /* =========================
+           適用バフ
+        ========================= */
+
+        y += 225;
+
+        roundedRectangle(
+          65,
+          y,
+          950,
+          215,
+          28,
+          card2
+        );
+
+        ctx.textAlign = "left";
+
+        ctx.fillStyle = brown;
+
+        ctx.font =
+          '800 27px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "適用設定",
+          105,
+          y + 50
+        );
+
+        ctx.fillStyle = dark;
+
+        ctx.font =
+          '600 23px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          `建造速度　${buildingSpeed}%`,
+          105,
+          y + 100
+        );
+
+        ctx.fillText(
+          `ハイエナ　${hyenaText}`,
+          105,
+          y + 145
+        );
+
+        ctx.fillText(
+          `副執政官　${minister}`,
+          555,
+          y + 100
+        );
+
+        ctx.fillText(
+          `領主指令　${order}`,
+          555,
+          y + 145
+        );
+
+        /* =========================
+           下部
+        ========================= */
+
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = gray;
+
+        ctx.font =
+          '500 20px -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif';
+
+        ctx.fillText(
+          "火晶建築 必要素材計算機",
+          WIDTH / 2,
+          HEIGHT - 45
+        );
+
+        /* =========================
+           Canvas → PNG
+        ========================= */
+
+        const blob =
+          await new Promise(resolve => {
+            canvas.toBlob(
+              resolve,
+              "image/png",
+              1
+            );
+          });
+
+        if (!blob) {
+          throw new Error(
+            "画像を作成できませんでした"
+          );
+        }
+
+        const file =
+          new File(
+            [blob],
+            "火晶建築_計算結果.png",
+            {
+              type: "image/png"
+            }
+          );
+
+        /* =========================
+           iPhoneなどの共有画面
+        ========================= */
+
+        if (
+          navigator.share &&
+          navigator.canShare &&
+          navigator.canShare({
+            files: [file]
+          })
+        ) {
+          await navigator.share({
+            files: [file],
+            title:
+              "火晶建築 必要素材計算結果"
+          });
+
+          if (message) {
+            message.textContent =
+              "画像を作成しました";
+          }
+        } else {
+          /*
+            Web Shareで画像共有できない端末は
+            PNGを開く
+          */
+          const imageUrl =
+            URL.createObjectURL(blob);
+
+          const link =
+            document.createElement("a");
+
+          link.href = imageUrl;
+
+          link.download =
+            "火晶建築_計算結果.png";
+
+          document.body.appendChild(link);
+
+          link.click();
+
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(
+              imageUrl
+            );
+          }, 1000);
+
+          if (message) {
+            message.textContent =
+              "結果画像を作成しました";
+          }
+        }
+
+        if (message) {
+          setTimeout(() => {
+            message.textContent = "";
+          }, 2500);
+        }
+      } catch (error) {
+        /*
+          iPhoneの共有画面を自分で閉じた場合は
+          エラー表示しない
+        */
+        if (
+          error?.name !== "AbortError"
+        ) {
+          console.error(error);
+
+          if (message) {
+            message.textContent =
+              "画像の作成に失敗しました";
+          }
+        }
+      } finally {
+        button.disabled = false;
+        button.textContent =
+          "結果を画像で共有";
+      }
+    },
+    true
+  );
+}
+
+/* =========================================================
+   共有画像機能ここまで
+========================================================= */
+  
   updateCalculation();
 })();
