@@ -638,3 +638,10 @@ button {
   object-position: center;
   border-radius: 10px;
 }
+
+/* 生肉・木材・石炭・鉄鉱のアイコンを少し小さくする */
+.resource-icon .material-image {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
